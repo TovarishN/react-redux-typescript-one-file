@@ -1,0 +1,13 @@
+{
+  "name": "webpack3",
+  "version": false,
+  "dependencies": {
+    "immutable": "registry:npm/immutable#3.7.6+20160411060006"
+  },
+  "globalDependencies": {
+    "react": "registry:dt/react#0.14.0+20161117000655",
+    "react-dom": "registry:dt/react-dom#0.14.0+20160412154040",
+    "react-redux": "registry:dt/react-redux#4.4.0+20160908183346",
+    "redux": "registry:dt/redux#3.5.2+20160703092728"
+  }
+}
