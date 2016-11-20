@@ -10,8 +10,8 @@ module.exports={
     },
     output: {
         path: path.join(__dirname, 'dist'),
-        publicPath: "/",
-        filename: 'js/[name].js'
+        publicPath: "/assets/",
+        filename: '[name].js'
     },
     devtool: 'source-map',
     resolve: {
