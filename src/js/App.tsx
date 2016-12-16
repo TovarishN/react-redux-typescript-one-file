@@ -33,6 +33,7 @@ class HelloWorld extends React.Component<ConnectedState & ConnectedDispatch & Ow
     render() {
         return (
             <div>
+                <div> Hello dima</div>
                 <p>Hello {this.props.cname} sasasdadsasd</p>
                 <input placeholder="input your name" value={this.props.cname} onChange={this.change} />
             </div>
