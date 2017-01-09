@@ -1,12 +1,22 @@
 {
     "compilerOptions": {
-        "target": "es5",
-        "module": "commonjs",
+        "target": "es6",
+        "module": "es6",
         "sourceMap": true,
         "removeComments": true,
-        "jsx": "react",
-        "noImplicitAny": true
+        "moduleResolution": "node",
+        "experimentalDecorators": true,
+        "emitDecoratorMetadata": true,
+        "jsx": "react"
+        //"noImplicitAny": true
     },
+    "include": [
+        "src/**/*.ts",
+        "src/**/*.tsx"
+    ],
+    "files": [
+        "./typings/index.d.ts"
+    ],
     "exclude": [
         "node_modules",
         "typings/main",

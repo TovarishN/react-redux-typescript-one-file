@@ -1,0 +1,28 @@
+{
+    // Use IntelliSense to learn about possible Node.js debug attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "type": "node",
+            "request": "launch",
+            "name": "Launch Program",
+            //"program": "${workspaceRoot}/node_modules/.bin/webpack-dev-server.cmd",
+            "program": "C:\\Users\\Dmitri\\AppData\\Roaming\\npm\\node_modules\\webpack-dev-server\\bin\\webpack-dev-server.js",
+            "cwd": "${workspaceRoot}",
+            //"args": ["-d", "--hot", "--inline", "--outDir", "."],
+            "env": {
+                "NODE_ENV": "development"
+            },
+            "sourceMaps": true,
+            "internalConsoleOptions": "openOnSessionStart"
+        },
+        {
+            "type": "node",
+            "request": "attach",
+            "name": "Attach to Process",
+            "port": 5858
+        }
+    ]
+}

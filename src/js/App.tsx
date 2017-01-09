@@ -4,9 +4,13 @@ import * as Redux from 'redux';
 import * as ReactRedux from 'react-redux';
 import * as Immutable from 'immutable';
 import Logger from './common/Logger';
-//import thunk from 'redux-thunk';
 
-interface OwnProps {
+import { graphql, ApolloProvider } from 'react-apollo';
+import { ApolloClient, createNetworkInterface } from 'apollo-client';
+import gql from 'graphql-tag';
+
+
+interface OwnProps extends React.HTMLProps<HelloWorld> {
     name: string
 }
 
@@ -41,61 +45,50 @@ class HelloWorld extends React.Component<ConnectedState & ConnectedDispatch & Ow
     }
 }
 
-const mapDispatchToProps = (dispatch: Redux.Dispatch<Store.All>): ConnectedDispatch => ({
-    changeName: (n: string) => dispatch(changeName(n))
+const client = new ApolloClient({
+    networkInterface: createNetworkInterface({ uri: 'http://localhost:4000/graphql' })
+
+
 });
 
-const mapStateToProps = (state: Store.All, ownProps: OwnProps): ConnectedState => ({
-    cname: (state && state.cn ? state.cn.value : '')
+const MyQuery = gql`query market {
+  GetMarkets {
+    id
+  }
+}`;
+
+client.query({ query: MyQuery }).then(data => {
+    console.log(data);
+}).catch((e: Error) => {
+    console.log(e.message);
 });
 
-export const Hello: React.ComponentClass<OwnProps> = ReactRedux.connect(mapStateToProps, mapDispatchToProps)(HelloWorld)
+const store = Redux.createStore(
+    Redux.combineReducers({ apollo: client.reducer }),
+    {}, // initial state
+    Redux.compose(
+        Redux.applyMiddleware(client.middleware())
+        // If you are using the devToolsExtension, you can add it here also
+        // window.devToolsExtension ? window.devToolsExtension() : f => f,
+    )
+);
 
-export type ChangeNameAction = { type: 'CHANGE_NAME', name: string }
+const MyMutation = gql`mutation MyMutation { addTodo(text: "Test 123") { id } }`;
 
-export const changeName = (name: string): ChangeNameAction => ({
-    type: 'CHANGE_NAME',
-    name
-})
+const MyComponentWithData = graphql(MyQuery)(MyComponent);
 
-export namespace Store {
-    export type ChangeName = { value: string }
-    export type All = {
-        cn: ChangeName,
-    }
-}
+const Co = graphql(MyQuery, data => {
+    console.log(JSON.stringify(data));
+})(MyComponent);
 
-const initialState: Store.ChangeName = { value: '' }
 
-function changeNameReducer(state: Store.ChangeName = initialState, action: ChangeNameAction): Store.ChangeName {
-    switch (action.type) {
-        case 'CHANGE_NAME': return { value : action.name };
-        default: return state;
-    }
-}
-
-export const reducers = Redux.combineReducers<Store.All>({
-    cn: changeNameReducer
-})
-
-export const apiMiddleware = ({dispatch}: Redux.MiddlewareAPI<Store.ChangeName>) =>
-    (next: Redux.Dispatch<Store.ChangeName>) =>
-        (action: ChangeNameAction) => {
-            switch (action.type) {
-                case 'CHANGE_NAME':
-                    //dispatch(changeName(action.name));
-                    break;
-            }
-
-            return next(action);
-        }
-
-const middleware = Redux.applyMiddleware(apiMiddleware, Logger);
-let store: Redux.Store<Store.All> = Redux.createStore(reducers, {} as Store.All, middleware)
 
 ReactDOM.render(
-    <ReactRedux.Provider store={store}>
-        <Hello name="aaa" />
-    </ReactRedux.Provider>,
+    // <ReactRedux.Provider store={store}>
+    //     <Co />
+    // </ReactRedux.Provider>,
+
+    <ApolloProvider client={client} store={store}>
+    </ApolloProvider>,
     document.getElementById('content')
 );
