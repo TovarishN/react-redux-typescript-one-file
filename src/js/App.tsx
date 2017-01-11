@@ -2,93 +2,123 @@ import * as React from 'react';
 import * as ReactDOM from 'react-dom';
 import * as Redux from 'redux';
 import * as ReactRedux from 'react-redux';
+import { Router } from 'react-router';
 import * as Immutable from 'immutable';
-import Logger from './common/Logger';
+import * as ReduxActions from 'redux-actions';
+import 'isomorphic-fetch';
 
-import { graphql, ApolloProvider } from 'react-apollo';
-import { ApolloClient, createNetworkInterface } from 'apollo-client';
 import gql from 'graphql-tag';
 
+import './common/Logger';
 
-interface OwnProps extends React.HTMLProps<HelloWorld> {
-    name: string
+const GraphqlUrl = 'http://localhost:4000/graphql';
+
+interface OwnProps {
+    query: () => void;
 }
 
-interface ConnectedState {
-    cname: string;
+interface HelloWorldProps {
+    name: string;
+    data?: any;
 }
 
-interface ConnectedDispatch {
-    changeName: (n: string) => void
+interface HelloWorldState {
+    name1: string;
+    data: string[];
 }
 
-interface OwnState {
-    //name: string;
-}
-
-class HelloWorld extends React.Component<ConnectedState & ConnectedDispatch & OwnProps, OwnState> {
-    constructor() {
-        super();
+class HelloWorld extends React.Component<HelloWorldProps & OwnProps, HelloWorldState> {
+    constructor(props) {
+        super(props);
+        this.state = {
+            name1: this.props.name
+            , data: []
+        }
     }
 
-    change = (e: any) => {
-        this.props.changeName(e.target.value);
+    componentDidMount(props) {
+        this.props.query();
     }
+    //{this.props.data.map((item, key) => <div key={key}>hello {item.id}</div>)}
     render() {
         return (
             <div>
-                <div> Hello dima</div>
-                <p>Hello {this.props.cname} sasasdadsasd</p>
-                <input placeholder="input your name" value={this.props.cname} onChange={this.change} />
+                <div> Hello dima {this.state.name1}</div>
+
             </div>
         );
     }
 }
 
-const client = new ApolloClient({
-    networkInterface: createNetworkInterface({ uri: 'http://localhost:4000/graphql' })
+const mapStateToProps = (state, own): HelloWorldProps => {
+    return {
+        name: "aaa"
+        , data: []
+    }
+};
 
-
+const mapDispatchToProps = (dispatch) => ({
+    query: () => { fetchQuery(dispatch); }
 });
 
-const MyQuery = gql`query market {
+const HwComponent = ReactRedux.connect(mapStateToProps, mapDispatchToProps)(HelloWorld);
+
+type ActionType = SendRequest | RecieveRequest | ErrorRequest;
+interface SendRequest { type: 'SEND_REQUEST'; query: string }
+interface RecieveRequest { type: 'RECIEVE_REQUEST'; response: string }
+interface ErrorRequest { type: 'ERROR_REQUEST', error: string }
+
+const helloWorldReducer = (state = { query: '', result: '', error: '' }, action: ActionType) => {
+    switch (action.type) {
+        case 'SEND_REQUEST': return { ...state, query: action.query };
+        case 'RECIEVE_REQUEST': return { ...state, result: action.response };
+        case 'ERROR_REQUEST': return { ...state, error: action.error };
+        default: return state;
+    }
+}
+
+const MyQuery = `query market {
   GetMarkets {
     id
   }
 }`;
 
-client.query({ query: MyQuery }).then(data => {
-    console.log(data);
-}).catch((e: Error) => {
-    console.log(e.message);
-});
+const makeQuery = (query: string): Promise<IResponse> => {
+    return fetch(GraphqlUrl, {
+        method: 'POST',
+        headers: {
+            'Accept': 'application/json',
+            'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ operationName: 'market', query: query, variables: null })
+    })
+}
 
-const store = Redux.createStore(
-    Redux.combineReducers({ apollo: client.reducer }),
-    {}, // initial state
-    Redux.compose(
-        Redux.applyMiddleware(client.middleware())
-        // If you are using the devToolsExtension, you can add it here also
-        // window.devToolsExtension ? window.devToolsExtension() : f => f,
-    )
+const fetchQuery = async dispatch => {
+    dispatch({ type: 'SEND_REQUEST', query: MyQuery });
+    try {
+        let res = await makeQuery(MyQuery);
+        let js = await res.json();
+        dispatch({ type: 'RECIEVE_REQUEST', response: js });
+    }
+    catch (e) {
+        dispatch({ type: 'ERROR_REQUEST', error: e.message });
+    }
+};
+
+
+
+const store = Redux.createStore(Redux.combineReducers(
+    {
+        'hw': helloWorldReducer
+    }),
+    Redux.applyMiddleware()
 );
-
-const MyMutation = gql`mutation MyMutation { addTodo(text: "Test 123") { id } }`;
-
-const MyComponentWithData = graphql(MyQuery)(MyComponent);
-
-const Co = graphql(MyQuery, data => {
-    console.log(JSON.stringify(data));
-})(MyComponent);
-
 
 
 ReactDOM.render(
-    // <ReactRedux.Provider store={store}>
-    //     <Co />
-    // </ReactRedux.Provider>,
-
-    <ApolloProvider client={client} store={store}>
-    </ApolloProvider>,
+    <ReactRedux.Provider store={store}>
+        <HwComponent name="props name" />
+    </ReactRedux.Provider>,
     document.getElementById('content')
 );
